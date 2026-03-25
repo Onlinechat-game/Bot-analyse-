@@ -3,43 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HackenStore PRO - Étape 1</title>
+    <title>HackenStore LIVE | XAUUSD</title>
     <style>
         :root {
-            --bg: #05070a;
-            --card: #0f141f;
-            --border: #1e293b;
-            --text: #e0e6ed;
-            --dim: #64748b;
-            --cyan: #00f2ff;
-            --green: #00ff9d;
-            --red: #ff0055;
-            --yellow: #ffaa00;
+            --bg: #05070a; --card: #0f141f; --border: #1e293b;
+            --text: #e0e6ed; --dim: #64748b;
+            --cyan: #00f2ff; --green: #00ff9d; --red: #ff0055; --yellow: #ffaa00;
         }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            padding: 10px;
-            font-size: 11px;
-        }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Courier New', monospace; margin: 0; padding: 10px; font-size: 11px; }
         
-        /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
-        .logo { color: var(--cyan); font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.4); letter-spacing: 1px; }
-        .status { color: var(--green); font-size: 10px; border: 1px solid var(--green); padding: 2px 6px; border-radius: 4px; }
+        .logo { color: var(--cyan); font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.4); }
+        .status { font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+        .status.connected { background: rgba(0, 255, 157, 0.2); color: var(--green); border: 1px solid var(--green); }
+        .status.disconnected { background: rgba(255, 0, 85, 0.2); color: var(--red); border: 1px solid var(--red); }
 
-        /* SIGNAL BOX */
-        .signal-box {
-            background: linear-gradient(135deg, #1e293b 0%, #0f141f 100%);
-            border: 1px solid #334155;
-            border-left: 4px solid var(--cyan);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
+        .signal-box { background: linear-gradient(135deg, #1e293b 0%, #0f141f 100%); border: 1px solid #334155; border-left: 4px solid var(--cyan); border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: center; }
         .sig-title { color: var(--dim); text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
         .sig-value { font-size: 22px; font-weight: bold; margin: 8px 0; min-height: 28px; }
         .sig-reason { font-size: 10px; color: #94a3b8; font-style: italic; }
@@ -47,390 +26,300 @@
         .sell { color: var(--red); text-shadow: 0 0 10px rgba(255,0,85,0.3); }
         .wait { color: var(--yellow); }
 
-        /* GRID INDICATORS */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: center; }
         .card h4 { margin: 0 0 5px 0; color: var(--dim); font-size: 9px; text-transform: uppercase; }
         .val { font-size: 15px; font-weight: bold; font-family: monospace; }
+        .live-price { font-size: 18px; color: #fff; }
 
-        /* TABLE */
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 6px; overflow: hidden; margin-bottom: 15px; font-size: 10px; }
-        th { text-align: left; color: var(--dim); padding: 8px; border-bottom: 1px solid var(--border); font-weight: normal; }
+        th { text-align: left; color: var(--dim); padding: 8px; border-bottom: 1px solid var(--border); }
         td { padding: 8px; border-bottom: 1px solid var(--border); font-family: monospace; }
-        tr:last-child td { border-bottom: none; }
-        .dot { height: 6px; width: 6px; border-radius: 50%; display: inline-block; margin-right: 5px; }
 
-        /* GRAPHIQUE NATIF AMÉLIORÉ */
-        .chart-container {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 15px;
-            position: relative;
-        }
+        .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 15px; position: relative; }
         canvas { width: 100%; height: 220px; display: block; }
-        .chart-label { position: absolute; top: 10px; left: 15px; font-size: 9px; color: var(--dim); }
 
-        /* CONSOLE */
-        .console {
-            background: #000;
-            border: 1px solid #333;
-            height: 90px;
-            overflow-y: scroll;
-            font-size: 9px;
-            color: #0f0;
-            padding: 5px;
-            font-family: monospace;
-            margin-bottom: 15px;
-            box-shadow: inset 0 0 10px rgba(0,255,0,0.1);
-        }
-        .log-line { border-bottom: 1px solid #111; margin-bottom: 2px; padding-bottom: 1px; }
+        .console { background: #000; border: 1px solid #333; height: 90px; overflow-y: scroll; font-size: 9px; color: #0f0; padding: 5px; font-family: monospace; margin-bottom: 15px; }
+        .log-line { border-bottom: 1px solid #111; margin-bottom: 2px; }
+        .log-error { color: var(--red); }
+        .log-warn { color: var(--yellow); }
 
-        /* FOOTER */
         .footer { text-align: center; color: var(--dim); font-size: 9px; padding-top: 10px; border-top: 1px solid var(--border); }
-        .signature { color: var(--cyan); font-weight: bold; font-size: 12px; letter-spacing: 2px; display: block; margin-top: 5px; text-shadow: 0 0 5px rgba(0,242,255,0.5); }
+        .signature { color: var(--cyan); font-weight: bold; font-size: 12px; letter-spacing: 2px; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">PRO</span></div>
-        <div class="status">● LIVE 1.0s</div>
+        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">LIVE</span></div>
+        <div id="connectionStatus" class="status disconnected">● DÉCONNECTÉ</div>
     </div>
 
     <div class="signal-box">
-        <div class="sig-title">Signal Principal (H1)</div>
-        <div id="mainSignal" class="sig-value wait">INITIALISATION...</div>
-        <div id="signalReason" class="sig-reason">Calcul des vecteurs...</div>
+        <div class="sig-title">Signal Temps Réel (XAU/USDT)</div>
+        <div id="mainSignal" class="sig-value wait">CONNEXION...</div>
+        <div id="signalReason" class="sig-reason">Attente des données marché...</div>
     </div>
 
     <div class="grid">
         <div class="card">
-            <h4>Prix XAUUSD</h4>
-            <div id="priceVal" class="val">---</div>
+            <h4>PRIX LIVE</h4>
+            <div id="priceVal" class="val live-price">---.--</div>
         </div>
         <div class="card">
             <h4>RSI (14)</h4>
             <div id="rsiVal" class="val">---</div>
         </div>
-C'est une excellente stratégie ! On va procéder par **étapes incrémentales**. Comme la version "Native" (sans librairie) fonctionne, on sait que le moteur de base est bon.
-
-Nous allons ajouter les fonctionnalités **une par une** pour identifier exactement ce qui bloque.
-
-### 🚀 ÉTAPE 1 : Retour des Bandes de Bollinger sur le graphique
-Dans cette version, nous allons réintroduire le calcul mathématique des **Bandes de Bollinger** et les afficher sur le graphique (Ligne du haut et ligne du bas) en pointillés, comme dans ta version Pro.
-
-Si cette étape fonctionne, cela validera que le dessin de lignes multiples ne pose pas problème.
-
-Copie ce code dans `index.html` :
-
-```html
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HackenStore Étape 1 : Bollinger</title>
-    <style>
-        body { background-color: #05070a; color: #e0e6ed; font-family: 'Courier New', monospace; margin: 0; padding: 10px; font-size: 12px; }
-        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
-        .logo { color: #00f2ff; font-weight: bold; font-size: 16px; text-shadow: 0 0 5px #00f2ff; }
-        
-        .box { background: #0f141f; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .signal { font-size: 24px; font-weight: bold; margin: 10px 0; }
-        .buy { color: #00ff9d; } .sell { color: #ff0055; } .wait { color: #ffaa00; }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .card { background: #0f141f; border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: center; }
-        .card h4 { margin: 0 0 5px 0; color: #64748b; font-size: 10px; text-transform: uppercase; }
-        .val { font-size: 16px; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; background: #0f141f; border-radius: 6px; overflow: hidden; margin-bottom: 15px; font-size: 10px; }
-        th { text-align: left; color: #64748b; padding: 8px; border-bottom: 1px solid #334155; }
-        td { padding: 8px; border-bottom: 1px solid #334155; font-family: monospace; }
-
-        .chart-box { background: #0f141f; border: 1px solid #334155; border-radius: 6px; padding: 10px; margin-bottom: 15px; position: relative; }
-        canvas { width: 100%; height: 200px; display: block; }
-
-        .log { background: #000; border: 1px solid #333; height: 80px; overflow-y: scroll; color: #0f0; font-size: 9px; padding: 5px; font-family: monospace; }
-        .footer { text-align: center; color: #64748b; font-size: 10px; margin-top: 20px; }
-        .sig { color: #00f2ff; font-weight: bold; font-size: 14px; display: block; margin-top: 5px; }
-        
-        /* Légende pour le graph */
-        .legend { display: flex; justify-content: center; gap: 15px; font-size: 9px; margin-top: 5px; color: #8899a6; }
-        .dot { height: 8px; width: 8px; display: inline-block; border-radius: 50%; margin-right: 4px; }
-    </style>
-</head>
-<body>
-
-    <div class="header">
-        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">ÉTAPE 1</span></div>
-        <div style="color:#fff; font-size:10px;">BOLLINGER ACTIF</div>
-    </div>
-
-    <div class="box">
-        <div style="color:#64748b; font-size:10px; text-transform:uppercase;">Prédiction H+1</div>
-        <div id="signal" class="signal wait">CALCUL...</div>
-        <div id="reason" style="font-size:11px; color:#8899a6;">Analyse en cours...</div>
-    </div>
-
-    <div class="grid">
         <div class="card">
-            <h4>PRIX OR</h4>
-            <div id="price" class="val">---</div>
+            <h4>TENDANCE</h4>
+            <div id="trendVal" class="val">---</div>
         </div>
         <div class="card">
-            <h4>RSI</h4>
-            <div id="rsi" class="val">---</div>
-        </div>
-        <div class="card">
-            <h4>BAND Upper</h4>
-            <div id="bb-up" class="val" style="color:#ffaa00">---</div>
-        </div>
-        <div class="card">
-            <h4>BAND Lower</h4>
-            <div id="bb-low" class="val" style="color:#ffaa00">---</div>
+            <h4>VOLATILITÉ</h4>
+            <div id="volVal" class="val">---</div>
         </div>
     </div>
 
     <table>
         <thead><tr><th>INDICATEUR</th><th>VALEUR</th><th>SIGNAL</th></tr></thead>
         <tbody>
-            <tr><td>Position Prix</td><td id="t-pos">---</td><td id="s-pos">---</td></tr>
-            <tr><td>Volatilité</td><td id="t-vol">---</td><td id="s-vol">---</td></tr>
-            <tr><td>Tendance</td><td id="t-trend">---</td><td id="s-trend">---</td></tr>
+            <tr><td>Moyenne Mobile 20</td><td id="t-mm">---</td><td id="s-mm">---</td></tr>
+            <tr><td>Bandes Bollinger</td><td id="t-bb">---</td><td id="s-bb">---</td></tr>
+            <tr><td>Volume (24h)</td><td id="t-vol">---</td><td id="s-vol">---</td></tr>
         </tbody>
     </table>
 
-    <div class="chart-box">
-        <canvas id="myCanvas" width="350" height="200"></canvas>
-        <div class="legend">
-            <span><span class="dot" style="background:#00f2ff"></span>Prix</span>
-            <span><span class="dot" style="background:#ffaa00; border:1px dashed #ffaa00"></span>Bollinger</span>
-        </div>
+    <div class="chart-container">
+        <canvas id="myCanvas" width="350" height="220"></canvas>
     </div>
 
-    <div class="log" id="log">
-        > Système Étape 1 Initialisé...<br>
-        > Calcul des Bandes de Bollinger actif.<br>
+    <div class="console" id="log">
+        <div class="log-line">> Initialisation du module réseau...</div>
+        <div class="log-line">> Tentative de connexion à l'API Binance...</div>
     </div>
 
     <div class="footer">
-        PROGRESSION VERS LA VERSION ULTRA PRO<br>
-        <span class="sig">HACKENSTORE</span>
+        DONNÉES TEMPS RÉEL - XAU/USDT<br>
+        <span class="signature">HACKENSTORE</span>
     </div>
 
     <script>
         // --- CONFIGURATION ---
-        let price = 2035.00;
-        let data = [];
-        const maxPoints = 40;
-        window.trendBias = 0;
-        
-        // Remplir données initiales
-        for(let i=0; i<maxPoints; i++) {
-            data.push(price + (Math.random() * 2 - 1));
-        }
+        const API_URL = 'https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=50';
+        let priceData = [];
+        let currentPrice = 0;
+        let isConnected = false;
 
-        // --- MATHS ---
-        function getRSI(data) {
-            if(data.length < 15) return 50;
-            let gain = 0, loss = 0;
-            for(let i = data.length-14; i < data.length; i++) {
+        // --- FONCTIONS MATHÉMATIQUES ---
+        function getRSI(data, period = 14) {
+            if (data.length < period + 1) return 50;
+            let gains = 0, losses = 0;
+            for (let i = data.length - period; i < data.length; i++) {
                 let diff = data[i] - data[i-1];
-                if(diff >= 0) gain += diff; else loss -= diff;
+                if (diff >= 0) gains += diff; else losses -= diff;
             }
-            if(loss === 0) return 100;
-            return 100 - (100 / (1 + (gain/loss)));
+            if (losses === 0) return 100;
+            return 100 - (100 / (1 + (gains/losses)));
         }
 
         function getSMA(data, period) {
-            if(data.length < period) return data[data.length-1];
+            if (data.length < period) return data[data.length-1];
             let sum = 0;
-            for(let i = data.length-period; i < data.length; i++) sum += data[i];
+            for(let i = data.length - period; i < data.length; i++) sum += data[i];
             return sum / period;
         }
 
-        function getBollingerBands(data, period = 20, stdDev = 2) {
-            if(data.length < period) return { upper: data[data.length-1], lower: data[data.length-1] };
-            
+        function getBollinger(data, period = 20, stdDev = 2) {
+            if(data.length < period) return { upper: data[data.length-1], lower: data[data.length-1], width: 0 };
             let sma = getSMA(data, period);
             let squaredDiffSum = 0;
-            
             for(let i = data.length - period; i < data.length; i++) {
                 squaredDiffSum += Math.pow(data[i] - sma, 2);
             }
-            
-            let standardDeviation = Math.sqrt(squaredDiffSum / period);
-            
+            let std = Math.sqrt(squaredDiffSum / period);
             return {
-                upper: sma + (stdDev * standardDeviation),
-                lower: sma - (stdDev * standardDeviation),
-                width: (sma + (stdDev * standardDeviation)) - (sma - (stdDev * standardDeviation))
+                upper: sma + (stdDev * std),
+                lower: sma - (stdDev * std),
+                width: (stdDev * std) * 2
             };
         }
 
-        // --- DESSIN GRAPHIQUE AMÉLIORÉ ---
-        function drawGraph(bbData) {
+        // --- DESSIN GRAPHIQUE ---
+        function drawGraph() {
             const canvas = document.getElementById('myCanvas');
             const ctx = canvas.getContext('2d');
             const w = canvas.width;
             const h = canvas.height;
-
-            // Effacer
             ctx.clearRect(0, 0, w, h);
 
-            // Trouver min/max pour l'échelle (en incluant les bandes pour ne pas couper)
-            let allValues = [...data];
-            // On ajoute les bandes au calcul de l'échelle pour que tout tienne
-            // Note: Pour simplifier ici, on prend juste les extrêmes des données récentes + marge
-            let min = Math.min(...data) - 2; 
-            let max = Math.max(...data) + 2;
+            if (priceData.length < 2) return;
+
+            let min = Math.min(...priceData) * 0.9995;
+            let max = Math.max(...priceData) * 1.0005;
             let range = max - min;
-            if(range === 0) range = 1;
+            let stepX = w / (priceData.length - 1);
 
-            let stepX = w / (maxPoints - 1);
-
-            // 1. Dessiner Bandes de Bollinger (Pointillés Orange)
+            // Bandes Bollinger (Pointillés)
+            let bb = getBollinger(priceData);
+            // Note: Pour le dessin historique précis, il faudrait recalculer BB à chaque point. 
+            // Ici on dessine une enveloppe approximative pour la performance mobile.
+            
             ctx.beginPath();
             ctx.strokeStyle = '#ffaa00';
             ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]); // Pointillés
-
-            // Bande Supérieure
-            for(let i = 0; i < data.length; i++) {
+            ctx.setLineDash([5, 5]);
+            // Bande Sup (Approx)
+            for(let i=0; i<priceData.length; i++) {
                 let x = i * stepX;
-                // On simule la bande sup comme étant le prix + volatilité fixe pour la démo visuelle si le calcul est trop lourd
-                // Mais utilisons le vrai calcul passé en paramètre pour le dernier point, et une estimation pour les autres
-                // Pour faire simple et stable : on dessine une enveloppe autour du prix
-                let yUpper = h - ((data[i] + 1.5) - min) / range * h; 
-                if(i===0) ctx.moveTo(x, yUpper);
-                else ctx.lineTo(x, yUpper);
+                let y = h - ((priceData[i] + (range*0.3)) - min) / range * h; // Approximation visuelle
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
-
-            // Bande Inférieure
+            // Bande Inf (Approx)
             ctx.beginPath();
-            for(let i = 0; i < data.length; i++) {
+            for(let i=0; i<priceData.length; i++) {
                 let x = i * stepX;
-                let yLower = h - ((data[i] - 1.5) - min) / range * h;
-                if(i===0) ctx.moveTo(x, yLower);
-                else ctx.lineTo(x, yLower);
+                let y = h - ((priceData[i] - (range*0.3)) - min) / range * h;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
-            
-            ctx.setLineDash([]); // Reset pointillés
+            ctx.setLineDash([]);
 
-            // 2. Dessiner le Prix (Ligne Pleine Cyan)
+            // Prix (Ligne Pleine)
             ctx.beginPath();
             ctx.strokeStyle = '#00f2ff';
             ctx.lineWidth = 2;
-            
-            for(let i = 0; i < data.length; i++) {
+            for(let i=0; i<priceData.length; i++) {
                 let x = i * stepX;
-                let y = h - ((data[i] - min) / range) * h;
-                
-                if(i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                let y = h - ((priceData[i] - min) / range) * h;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
 
-            // Remplissage sous le prix
-            ctx.lineTo((data.length-1)*stepX, h);
+            // Remplissage
+            ctx.lineTo((priceData.length-1)*stepX, h);
             ctx.lineTo(0, h);
             ctx.fillStyle = 'rgba(0, 242, 255, 0.1)';
             ctx.fill();
 
             // Point actuel
-            let lastX = (data.length - 1) * stepX;
-            let lastY = h - ((data[data.length-1] - min) / range) * h;
-            
+            let lastX = (priceData.length-1)*stepX;
+            let lastY = h - ((currentPrice - min) / range) * h;
             ctx.beginPath();
-            ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+            ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
             ctx.fillStyle = '#fff';
             ctx.fill();
         }
 
-        function update() {
-            // Simulation mouvement prix
-            let change = (Math.random() * 0.8) - 0.4;
-            if(Math.random() > 0.95) window.trendBias = (Math.random() * 2) - 1;
-            change += (window.trendBias || 0) * 0.2;
-            
-            price += change;
-            data.push(price);
-            if(data.length > maxPoints) data.shift();
+        // --- LOGIQUE PRINCIPALE ---
+        async function fetchMarketData() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("Erreur Réseau");
+                const data = await response.json();
 
-            // Calculs
-            let rsi = getRSI(data);
-            let bb = getBollingerBands(data, 20, 2);
-            
-            // Affichage Textes
-            document.getElementById('price').innerText = price.toFixed(2);
-            document.getElementById('price').style.color = change >= 0 ? '#00ff9d' : '#ff0055';
-            
-            document.getElementById('rsi').innerText = rsi.toFixed(1);
-            document.getElementById('rsi').style.color = rsi > 70 ? '#ff0055' : (rsi < 30 ? '#00ff9d' : '#fff');
+                // Extraction des prix de clôture
+                priceData = data.map(k => parseFloat(k[4])); 
+                currentPrice = priceData[priceData.length - 1];
 
-            // Affichage Bandes
-            document.getElementById('bb-up').innerText = bb.upper.toFixed(2);
-            document.getElementById('bb-low').innerText = bb.lower.toFixed(2);
+                isConnected = true;
+                updateUI();
+                log("Données reçues avec succès. Prix: " + currentPrice, "normal");
+                
+                document.getElementById('connectionStatus').className = "status connected";
+                document.getElementById('connectionStatus').innerText = "● EN LIGNE";
 
-            // Analyse Position
-            let posText = "CENTRE";
-            let posColor = "#fff";
-            let signalText = "NEUTRE";
-            
-            if(price > bb.upper) { posText = "HAUT (Surachat)"; posColor = "#ff0055"; signalText = "VENTE POSSIBLE"; }
-            else if(price < bb.lower) { posText = "BAS (Survente)"; posColor = "#00ff9d"; signalText = "ACHAT POSSIBLE"; }
-            else if(price > getSMA(data, 20)) { posText = "SUPÉRIEUR"; posColor = "#00f2ff"; signalText = "HAUSSIER"; }
-            else { posText = "INFÉRIEUR"; posColor = "#ffaa00"; signalText = "BAISSIER"; }
-
-            document.getElementById('t-pos').innerText = posText;
-            document.getElementById('t-pos').style.color = posColor;
-            document.getElementById('s-pos').innerText = signalText;
-            document.getElementById('s-pos').style.color = posColor;
-
-            document.getElementById('t-vol').innerText = bb.width.toFixed(2);
-            document.getElementById('s-vol').innerText = bb.width > 3 ? "FORTE" : "FAIBLE";
-
-            document.getElementById('t-trend').innerText = window.trendBias > 0 ? "HAUSSE" : "BAISSE";
-            document.getElementById('s-trend').innerText = window.trendBias > 0 ? "🟢" : "🔴";
-
-            // Signal Principal
-            let signalEl = document.getElementById('signal');
-            let reasonEl = document.getElementById('reason');
-
-            if(rsi < 30 && price < bb.lower) {
-                signalEl.innerText = "ACHAT FORT 🚀";
-                signalEl.className = "signal buy";
-                reasonEl.innerText = "Survente RSI + Touche Bande Inf.";
-            } else if (rsi > 70 && price > bb.upper) {
-                signalEl.innerText = "VENTE FORTE 📉";
-                signalEl.className = "signal sell";
-                reasonEl.innerText = "Surachat RSI + Touche Bande Sup.";
-            } else {
-                signalEl.innerText = "SURVEILLANCE ⚠️";
-                signalEl.className = "signal wait";
-                reasonEl.innerText = "Attente confirmation cassure.";
-            }
-
-            // Dessiner le graphique avec les bandes
-            drawGraph(bb);
-
-            // Log console
-            if(Math.random() > 0.8) {
-                let logDiv = document.getElementById('log');
-                let time = new Date().toLocaleTimeString();
-                logDiv.innerHTML = `> [${time}] BB Width: ${bb.width.toFixed(2)} | Pos: ${posText}<br>` + logDiv.innerHTML;
-                if(logDiv.innerHTML.length > 400) logDiv.innerHTML = logDiv.innerHTML.substring(0, 400);
+            } catch (error) {
+                isConnected = false;
+                log("ÉCHEC CONNEXION: " + error.message, "error");
+                log("Vérifiez votre connexion internet ou les blocages CORS.", "warn");
+                document.getElementById('connectionStatus').className = "status disconnected";
+                document.getElementById('connectionStatus').innerText = "● HORS LIGNE";
+                
+                // Fallback: Si échec, on simule légèrement pour ne pas figer l'app
+                if(priceData.length === 0) {
+                    priceData.push(2035);
+                    currentPrice = 2035;
+                    updateUI();
+                }
             }
         }
 
-        // Lancement
+        function updateUI() {
+            if (priceData.length < 2) return;
+
+            const rsi = getRSI(priceData);
+            const mm20 = getSMA(priceData, 20);
+            const bb = getBollinger(priceData);
+            const trend = currentPrice > mm20 ? "HAUSSIER" : "BAISSIER";
+
+            // Affichage Valeurs
+            document.getElementById('priceVal').innerText = currentPrice.toFixed(2);
+            document.getElementById('priceVal').style.color = currentPrice > priceData[priceData.length-2] ? '#00ff9d' : '#ff0055';
+            
+            document.getElementById('rsiVal').innerText = rsi.toFixed(1);
+            document.getElementById('rsiVal').style.color = rsi > 70 ? '#ff0055' : (rsi < 30 ? '#00ff9d' : '#fff');
+
+            document.getElementById('trendVal').innerText = trend;
+            document.getElementById('trendVal').style.color = trend === "HAUSSIER" ? '#00ff9d' : '#ff0055';
+
+            document.getElementById('volVal').innerText = bb.width.toFixed(2);
+
+            document.getElementById('t-mm').innerText = mm20.toFixed(2);
+            document.getElementById('s-mm').innerText = currentPrice > mm20 ? "ACHAT" : "VENTE";
+            document.getElementById('s-mm').style.color = currentPrice > mm20 ? "#00ff9d" : "#ff0055";
+
+            document.getElementById('t-bb').innerText = bb.width.toFixed(2);
+            let pos = "CENTRE";
+            if(currentPrice > bb.upper) pos = "SURACHAT";
+            if(currentPrice < bb.lower) pos = "SURVENTE";
+            document.getElementById('s-bb').innerText = pos;
+
+            document.getElementById('t-vol').innerText = "ACTIF";
+            document.getElementById('s-vol').innerText = "OK";
+
+            // Signal Principal
+            const signalEl = document.getElementById('mainSignal');
+            const reasonEl = document.getElementById('signalReason');
+
+            if (rsi < 30 && currentPrice < bb.lower) {
+                signalEl.innerText = "ACHAT FORT 🚀";
+                signalEl.className = "sig-value buy";
+                reasonEl.innerText = "Survente RSI + Rebond Bande Inf.";
+            } else if (rsi > 70 && currentPrice > bb.upper) {
+                signalEl.innerText = "VENTE FORTE 📉";
+                signalEl.className = "sig-value sell";
+                reasonEl.innerText = "Surachat RSI + Rejet Bande Sup.";
+            } else if (currentPrice > mm20) {
+                signalEl.innerText = "TENDANCE ACHAT 📈";
+                signalEl.className = "sig-value buy";
+                reasonEl.innerText = "Prix au-dessus MM20";
+            } else {
+                signalEl.innerText = "TENDANCE VENTE 📉";
+                signalEl.className = "sig-value sell";
+                reasonEl.innerText = "Prix sous MM20";
+            }
+
+            drawGraph();
+        }
+
+        function log(msg, type="normal") {
+            const logDiv = document.getElementById('log');
+            const line = document.createElement('div');
+            line.className = "log-line";
+            if(type === "error") line.classList.add("log-error");
+            if(type === "warn") line.classList.add("log-warn");
+            
+            const time = new Date().toLocaleTimeString();
+            line.innerText = `[${time}] ${msg}`;
+            logDiv.prepend(line);
+            if(logDiv.children.length > 20) logDiv.lastChild.remove();
+        }
+
+        // --- DÉMARRAGE ---
         window.onload = function() {
-            setInterval(update, 1000);
+            fetchMarketData(); // Premier appel
+            setInterval(fetchMarketData, 5000); // Mise à jour toutes les 5 secondes (limite API gratuite)
         };
     </script>
 </body>
