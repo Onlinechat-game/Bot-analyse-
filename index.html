@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HackenStore Native Engine</title>
+    <title>HackenStore REAL-TIME</title>
     <style>
         :root {
             --bg: #05070a; --card: #0f141f; --border: #1e293b;
@@ -12,17 +12,15 @@
         }
         body { background-color: var(--bg); color: var(--text); font-family: 'Courier New', monospace; margin: 0; padding: 0; font-size: 11px; display: flex; flex-direction: column; height: 100vh; }
         
-        /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); background: var(--card); z-index: 20; }
         .logo { color: var(--cyan); font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.4); letter-spacing: 1px; }
-        .status-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
-        .status-live { color: var(--green); border-color: var(--green); background: rgba(0,255,157,0.1); }
+        
+        .status-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; border: 1px solid; font-weight: bold; display: flex; align-items: center; }
+        .status-live { color: var(--green); border-color: var(--green); background: rgba(0,255,157,0.1); box-shadow: 0 0 10px rgba(0,255,157,0.2); }
         .status-offline { color: var(--yellow); border-color: var(--yellow); background: rgba(255,170,0,0.1); }
-
-        /* CONTENT */
+        
         .content { flex: 1; overflow-y: auto; padding: 10px; }
 
-        /* PREDICTION BOX */
         .pred-box {
             background: linear-gradient(145deg, #1e293b, #0f141f);
             border: 1px solid #334155;
@@ -45,7 +43,6 @@
         .sell { color: var(--red); text-shadow: 0 0 15px rgba(255,0,85,0.4); border-left-color: var(--red) !important; }
         .wait { color: var(--yellow); border-left-color: var(--yellow) !important; }
 
-        /* GRAPHIQUE CANVAS */
         .chart-container {
             background: var(--card);
             border: 1px solid var(--border);
@@ -58,7 +55,6 @@
         .chart-legend { display: flex; justify-content: space-around; font-size: 9px; color: var(--dim); margin-top: 5px; }
         .legend-item span { display: inline-block; width: 10px; height: 3px; margin-right: 5px; vertical-align: middle; }
 
-        /* INDICATEURS GRID */
         .grid-indicators { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .ind-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
         .ind-label { font-size: 9px; color: var(--dim); text-transform: uppercase; margin-bottom: 4px; }
@@ -68,11 +64,11 @@
         .text-down { color: var(--red); }
         .text-neutral { color: var(--yellow); }
 
-        /* CONSOLE */
         .console { background: #000; border: 1px solid #333; height: 100px; border-radius: 6px; overflow-y: scroll; padding: 8px; font-size: 9px; color: #0f0; font-family: 'Courier New', monospace; margin-bottom: 15px; }
         .log-entry { margin-bottom: 4px; border-bottom: 1px solid #111; }
         .log-warn { color: var(--yellow); }
         .log-err { color: var(--red); }
+        .log-info { color: var(--cyan); }
 
         .footer { text-align: center; color: var(--dim); font-size: 9px; padding: 15px 10px; border-top: 1px solid var(--border); background: var(--card); }
         .signature { color: var(--cyan); font-weight: 900; font-size: 14px; letter-spacing: 2px; display: block; margin-top: 5px; }
@@ -90,13 +86,12 @@
 <body>
 
     <div class="header">
-        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">NATIVE</span></div>
-        <div id="connStatus" class="status-badge status-offline">● OFFLINE</div>
+        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">REAL</span></div>
+        <div id="connStatus" class="status-badge status-offline">● CONNEXION...</div>
     </div>
 
     <div class="content">
         
-        <!-- PREDICTION -->
         <div class="pred-box" id="predBox">
             <div class="pred-header">
                 <span class="pred-title">Prédiction Algorithmique</span>
@@ -106,20 +101,18 @@
                 <div id="signalText" class="pred-signal wait">INITIALISATION...</div>
                 <div id="targetText" class="pred-target">Cible: Calcul...</div>
             </div>
-            <div id="reasonText" class="pred-reason">Récupération des données marché...</div>
+            <div id="reasonText" class="pred-reason">Analyse des flux en cours...</div>
         </div>
 
-        <!-- GRAPHIQUE DESSINÉ À LA MAIN -->
         <div class="chart-container">
             <canvas id="mainChart" width="350" height="250"></canvas>
             <div class="chart-legend">
-                <div class="legend-item"><span style="background:#00f2ff"></span>Prix</div>
+                <div class="legend-item"><span style="background:#00f2ff"></span>Prix Réel</div>
                 <div class="legend-item"><span style="background:#ffaa00; border-top:1px dashed #ffaa00"></span>Bollinger</div>
                 <div class="legend-item"><span style="background:#bd00ff"></span>MM20</div>
             </div>
         </div>
 
-        <!-- INDICATEURS -->
         <div class="grid-indicators">
             <div class="ind-card">
                 <span class="ind-label">RSI (14)</span>
@@ -145,10 +138,9 @@
 
         <button onclick="forceAnalysis()">🔄 FORCER ANALYSE & PRÉDICTION</button>
 
-        <!-- CONSOLE -->
         <div class="console" id="consoleLog">
-            <div class="log-entry">> Moteur HackenStore Native démarré.</div>
-            <div class="log-entry">> Tentative de connexion API Binance (XAUUSDT)...</div>
+            <div class="log-entry log-info">> Démarrage du moteur HackenStore...</div>
+            <div class="log-entry">> Tentative de connexion au flux XAU/USDT...</div>
         </div>
 
     </div>
@@ -160,14 +152,18 @@
 
     <script>
         // --- CONFIGURATION ---
-        const API_URL = 'https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=60';
-        let priceData = []; // Historique des prix (closing)
-        let isLive = false;
-        let currentPrice = 2035.00; // Valeur par défaut
-
-        // --- MATHS & INDICATEURS ---
+        // On essaie d'abord Binance direct, puis un proxy si ça échoue
+        const API_URLS = [
+            'https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=60',
+            'https://api.binance.us/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=60'
+        ];
         
-        // Moyenne Mobile Simple
+        let priceData = []; 
+        let isLive = false;
+        let currentPrice = 2035.00;
+        let updateCount = 0;
+
+        // --- MATHS ---
         function getSMA(data, period) {
             if (data.length < period) return data[data.length - 1];
             let sum = 0;
@@ -175,7 +171,6 @@
             return sum / period;
         }
 
-        // RSI
         function getRSI(data, period = 14) {
             if (data.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -187,7 +182,6 @@
             return 100 - (100 / (1 + (gains/losses)));
         }
 
-        // Bandes de Bollinger
         function getBollinger(data, period = 20, stdDev = 2) {
             if (data.length < period) return { upper: data[data.length-1], lower: data[data.length-1], mid: data[data.length-1], width: 0 };
             let mid = getSMA(data, period);
@@ -204,7 +198,6 @@
             };
         }
 
-        // MACD (Simple : EMA12 - EMA26)
         function getEMA(data, period) {
             const k = 2 / (period + 1);
             let ema = data[0];
@@ -213,18 +206,17 @@
             }
             return ema;
         }
+
         function getMACD(data) {
             if (data.length < 26) return { macd: 0, signal: 0, hist: 0 };
             let ema12 = getEMA(data, 12);
             let ema26 = getEMA(data, 26);
             let macdLine = ema12 - ema26;
-            // Pour simplifier sans historique de MACD, on simule le signal comme une moyenne du MACD récent
-            // Dans une version pro complète, il faudrait stocker l'historique du MACD
             let signalLine = macdLine * 0.8; 
             return { macd: macdLine, signal: signalLine, hist: macdLine - signalLine };
         }
 
-        // --- DESSIN GRAPHIQUE (CANVAS) ---
+        // --- DESSIN ---
         function drawChart() {
             const canvas = document.getElementById('mainChart');
             const ctx = canvas.getContext('2d');
@@ -232,117 +224,106 @@
             const h = canvas.height;
             
             ctx.clearRect(0, 0, w, h);
-            
             if (priceData.length < 5) return;
 
-            // Échelle
             let min = Math.min(...priceData) * 0.999;
             let max = Math.max(...priceData) * 1.001;
             let range = max - min;
             let stepX = w / (priceData.length - 1);
-
-            // Helper Y
             const getY = (val) => h - ((val - min) / range) * h;
 
-            // 1. Bandes de Bollinger (Orange Pointillé)
-            // On calcule les bandes pour chaque point pour un rendu précis (coûteux mais beau)
-            // Pour perf mobile, on approxime avec les valeurs actuelles étalées ou on calcule tout
-            // Ici on calcule tout pour la précision
-            ctx.beginPath();
-            ctx.strokeStyle = '#ffaa00';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 4]);
-            
-            // Bande Sup
+            // Bollinger Sup
+            ctx.beginPath(); ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
             for(let i=0; i<priceData.length; i++) {
-                // Recalcul BB glissant pour le point i
                 let slice = priceData.slice(0, i+1);
                 let bb = getBollinger(slice, 20, 2);
-                let x = i * stepX;
-                let y = getY(bb.upper);
+                let x = i * stepX; let y = getY(bb.upper);
                 if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
 
-            // Bande Inf
+            // Bollinger Inf
             ctx.beginPath();
             for(let i=0; i<priceData.length; i++) {
                 let slice = priceData.slice(0, i+1);
                 let bb = getBollinger(slice, 20, 2);
-                let x = i * stepX;
-                let y = getY(bb.lower);
+                let x = i * stepX; let y = getY(bb.lower);
                 if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // 2. MM20 (Violet)
-            ctx.beginPath();
-            ctx.strokeStyle = '#bd00ff';
-            ctx.lineWidth = 1;
+            // MM20
+            ctx.beginPath(); ctx.strokeStyle = '#bd00ff'; ctx.lineWidth = 1;
             for(let i=0; i<priceData.length; i++) {
                 let slice = priceData.slice(0, i+1);
                 let mm = getSMA(slice, 20);
-                let x = i * stepX;
-                let y = getY(mm);
+                let x = i * stepX; let y = getY(mm);
                 if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
 
-            // 3. Prix (Cyan Plein)
-            ctx.beginPath();
-            ctx.strokeStyle = '#00f2ff';
-            ctx.lineWidth = 2;
+            // Prix
+            ctx.beginPath(); ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 2;
             for(let i=0; i<priceData.length; i++) {
-                let x = i * stepX;
-                let y = getY(priceData[i]);
+                let x = i * stepX; let y = getY(priceData[i]);
                 if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
             ctx.stroke();
             
-            // Remplissage sous le prix
-            ctx.lineTo(w, h);
-            ctx.lineTo(0, h);
-            ctx.fillStyle = 'rgba(0, 242, 255, 0.05)';
-            ctx.fill();
+            ctx.lineTo(w, h); ctx.lineTo(0, h);
+            ctx.fillStyle = 'rgba(0, 242, 255, 0.05)'; ctx.fill();
 
-            // Point actuel
             let lastX = (priceData.length-1)*stepX;
             let lastY = getY(currentPrice);
-            ctx.beginPath();
-            ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
+            ctx.fillStyle = '#fff'; ctx.fill();
         }
 
-        // --- LOGIQUE PRINCIPALE ---
+        // --- FETCH DATA ---
         async function fetchData() {
-            try {
-                const res = await fetch(API_URL);
-                if(!res.ok) throw new Error("HTTP " + res.status);
-                const data = await res.json();
-                
-                priceData = data.map(k => parseFloat(k[4])); // Closing prices
-                currentPrice = priceData[priceData.length-1];
-                
-                isLive = true;
-                document.getElementById('connStatus').innerText = "● LIVE DATA";
-                document.getElementById('connStatus').className = "status-badge status-live";
-                log("Données Binance reçues avec succès.", "normal");
-                
-                updateUI();
-            } catch (e) {
-                isLive = false;
-                document.getElementById('connStatus').innerText = "● SIMULATION";
-                document.getElementById('connStatus').className = "status-badge status-offline";
-                log("Erreur API (CORS?). Passage en mode simulation réaliste.", "warn");
-                simulateData(); // Fallback simulation
-                updateUI();
+            let success = false;
+            
+            for (const url of API_URLS) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const data = await res.json();
+                    
+                    priceData = data.map(k => parseFloat(k[4]));
+                    currentPrice = priceData[priceData.length-1];
+                    
+                    isLive = true;
+                    success = true;
+                    
+                    if (updateCount === 0) {
+                        document.getElementById('connStatus').innerText = "● LIVE DATA (BINANCE)";
+                        document.getElementById('connStatus').className = "status-badge status-live";
+                        log("Connexion ÉTABLIE avec le marché réel.", "log-info");
+                        log(`Prix actuel: ${currentPrice}$`, "log-info");
+                    }
+                    break; // Sortir de la boucle si succès
+                } catch (e) {
+                    console.log("Échec URL:", url, e);
+                }
             }
+
+            if (!success) {
+                // Fallback Simulation si tout échoue
+                if (updateCount === 0) {
+                    log("ÉCHEC CONNEXION API. Passage en mode SIMULATION RÉALISTE.", "log-warn");
+                    log("Le graphique simulera les mouvements du marché.", "log-warn");
+                    document.getElementById('connStatus').innerText = "● SIMULATION (MODE SÉCURITÉ)";
+                    document.getElementById('connStatus').className = "status-badge status-offline";
+                }
+                simulateData();
+            }
+            
+            updateCount++;
+            updateUI();
         }
 
         function simulateData() {
-            // Génère un mouvement réaliste si l'API échoue
             let change = (Math.random() * 0.8) - 0.4;
             if(Math.random() > 0.95) window.trend = (Math.random()*2)-1;
             change += (window.trend||0)*0.2;
@@ -357,13 +338,11 @@
         function updateUI() {
             if(priceData.length < 20) return;
 
-            // Calculs
             const rsi = getRSI(priceData);
             const bb = getBollinger(priceData);
             const macd = getMACD(priceData);
             const mm20 = bb.mid;
 
-            // Affichage Indicateurs
             const priceEl = document.getElementById('val-price');
             priceEl.innerText = currentPrice.toFixed(2);
             priceEl.className = `ind-value ${currentPrice >= priceData[priceData.length-2] ? 'text-up' : 'text-down'}`;
@@ -381,10 +360,7 @@
             document.getElementById('val-bb').innerText = bb.width.toFixed(2);
             document.getElementById('sub-bb').innerText = bb.width > 3 ? "Volatilité Forte" : "Calme";
 
-            // Dessin
             drawChart();
-
-            // Prédiction Auto
             runPrediction(rsi, macd, bb, currentPrice, mm20);
         }
 
@@ -394,37 +370,23 @@
             const rsnEl = document.getElementById('reasonText');
             const box = document.getElementById('predBox');
 
-            let signal = "ATTENTE";
-            let target = 0;
-            let reason = "";
-            let cls = "wait";
+            let signal = "ATTENTE", target = 0, reason = "", cls = "wait";
 
-            // Logique de trading
             if (rsi < 30 && price < bb.lower) {
-                signal = "ACHAT (REBOND) 🚀";
-                target = price + (bb.width * 0.8); // Cible retour vers la moyenne
-                reason = "Survente extrême + Touche bande inférieure.";
-                cls = "buy";
+                signal = "ACHAT (REBOND) 🚀"; target = price + (bb.width * 0.8);
+                reason = "Survente extrême + Touche bande inférieure."; cls = "buy";
             } else if (rsi > 70 && price > bb.upper) {
-                signal = "VENTE (CORRECTION) 📉";
-                target = price - (bb.width * 0.8);
-                reason = "Surachat extrême + Rejet bande supérieure.";
-                cls = "sell";
+                signal = "VENTE (CORRECTION) 📉"; target = price - (bb.width * 0.8);
+                reason = "Surachat extrême + Rejet bande supérieure."; cls = "sell";
             } else if (price > mm20 && macd.hist > 0) {
-                signal = "TENDANCE ACHAT 📈";
-                target = price + (bb.width * 0.5);
-                reason = "Prix au dessus MM20 + Momentum MACD positif.";
-                cls = "buy";
+                signal = "TENDANCE ACHAT 📈"; target = price + (bb.width * 0.5);
+                reason = "Prix > MM20 + Momentum MACD positif."; cls = "buy";
             } else if (price < mm20 && macd.hist < 0) {
-                signal = "TENDANCE VENTE 📉";
-                target = price - (bb.width * 0.5);
-                reason = "Prix sous MM20 + Momentum MACD négatif.";
-                cls = "sell";
+                signal = "TENDANCE VENTE 📉"; target = price - (bb.width * 0.5);
+                reason = "Prix < MM20 + Momentum MACD négatif."; cls = "sell";
             } else {
-                signal = "CONSOLIDATION ⚠️";
-                target = price;
-                reason = "Marché sans direction claire. Attendre cassure.";
-                cls = "wait";
+                signal = "CONSOLIDATION ⚠️"; target = price;
+                reason = "Marché sans direction claire."; cls = "wait";
             }
 
             sigEl.innerText = signal;
@@ -442,24 +404,23 @@
         }
 
         function forceAnalysis() {
-            log("Analyse forcée demandée...", "normal");
+            log("Analyse forcée...", "log-info");
             updateUI();
         }
 
         function log(msg, type) {
             const div = document.createElement('div');
-            div.className = `log-entry ${type === 'warn' ? 'log-warn' : (type === 'err' ? 'log-err' : '')}`;
+            div.className = `log-entry ${type === 'log-warn' ? 'log-warn' : (type === 'log-err' ? 'log-err' : '')}`;
             div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
             const consoleEl = document.getElementById('consoleLog');
             consoleEl.prepend(div);
             if(consoleEl.children.length > 10) consoleEl.lastChild.remove();
         }
 
-        // --- BOUCLE PRINCIPALE (1 SECONDE) ---
         window.onload = function() {
-            fetchData(); // Premier appel
-            setInterval(fetchData, 1000); // Mise à jour chaque seconde
+            fetchData();
+            setInterval(fetchData, 1000);
         };
     </script>
 </body>
-    </html>
+</html>
