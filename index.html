@@ -3,249 +3,463 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HackenStore LIVE | TradingView</title>
+    <title>HackenStore Native Engine</title>
     <style>
         :root {
             --bg: #05070a; --card: #0f141f; --border: #1e293b;
             --text: #e0e6ed; --dim: #64748b;
-            --cyan: #00f2ff; --green: #00ff9d; --red: #ff0055; --yellow: #ffaa00;
+            --cyan: #00f2ff; --green: #00ff9d; --red: #ff0055; --yellow: #ffaa00; --purple: #bd00ff;
         }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Courier New', monospace; margin: 0; padding: 0; font-size: 12px; display: flex; flex-direction: column; height: 100vh; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Courier New', monospace; margin: 0; padding: 0; font-size: 11px; display: flex; flex-direction: column; height: 100vh; }
         
         /* HEADER */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); background: var(--card); }
-        .logo { color: var(--cyan); font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.4); }
-        .live-indicator { display: flex; align-items: center; font-size: 10px; color: var(--green); }
-        .dot { height: 8px; width: 8px; background-color: var(--green); border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse 1.5s infinite; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); background: var(--card); z-index: 20; }
+        .logo { color: var(--cyan); font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0, 242, 255, 0.4); letter-spacing: 1px; }
+        .status-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
+        .status-live { color: var(--green); border-color: var(--green); background: rgba(0,255,157,0.1); }
+        .status-offline { color: var(--yellow); border-color: var(--yellow); background: rgba(255,170,0,0.1); }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        /* ZONE PRINCIPALE SCROLLABLE */
+        /* CONTENT */
         .content { flex: 1; overflow-y: auto; padding: 10px; }
 
-        /* SIGNAL BOX */
-        .signal-box { background: linear-gradient(135deg, #1e293b 0%, #0f141f 100%); border: 1px solid #334155; border-left: 4px solid var(--cyan); border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: center; }
-        .sig-title { color: var(--dim); text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
-        .sig-value { font-size: 24px; font-weight: bold; margin: 10px 0; min-height: 30px; }
-        .sig-reason { font-size: 10px; color: #94a3b8; font-style: italic; }
-        .buy { color: var(--green); text-shadow: 0 0 10px rgba(0,255,157,0.3); }
-        .sell { color: var(--red); text-shadow: 0 0 10px rgba(255,0,85,0.3); }
-        .wait { color: var(--yellow); }
+        /* PREDICTION BOX */
+        .pred-box {
+            background: linear-gradient(145deg, #1e293b, #0f141f);
+            border: 1px solid #334155;
+            border-left: 5px solid var(--cyan);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .pred-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .pred-title { color: var(--dim); font-size: 10px; text-transform: uppercase; }
+        .pred-time { color: var(--cyan); font-size: 10px; font-weight: bold; border: 1px solid var(--cyan); padding: 2px 6px; border-radius: 4px; }
+        
+        .pred-main { text-align: center; margin: 15px 0; }
+        .pred-signal { font-size: 24px; font-weight: 900; margin-bottom: 5px; text-transform: uppercase; }
+        .pred-target { font-size: 13px; color: #fff; background: rgba(255,255,255,0.1); display: inline-block; padding: 4px 12px; border-radius: 20px; }
+        .pred-reason { font-size: 10px; color: #94a3b8; margin-top: 8px; text-align: center; font-style: italic; }
 
-        /* GRID INDICATEURS MANUELS (Simulation basée sur tendance) */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: center; }
-        .card h4 { margin: 0 0 5px 0; color: var(--dim); font-size: 9px; text-transform: uppercase; }
-        .val { font-size: 16px; font-weight: bold; font-family: monospace; }
+        .buy { color: var(--green); text-shadow: 0 0 15px rgba(0,255,157,0.4); border-left-color: var(--green) !important; }
+        .sell { color: var(--red); text-shadow: 0 0 15px rgba(255,0,85,0.4); border-left-color: var(--red) !important; }
+        .wait { color: var(--yellow); border-left-color: var(--yellow) !important; }
 
-        /* WIDGET TRADINGVIEW CONTAINER */
+        /* GRAPHIQUE CANVAS */
         .chart-container {
-            width: 100%;
-            height: 350px;
-            border-radius: 8px;
-            overflow: hidden;
+            background: var(--card);
             border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
             margin-bottom: 15px;
             position: relative;
         }
-        .chart-overlay {
-            position: absolute;
-            top: 10px; left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 10px;
-            color: #fff;
-            z-index: 10;
-            pointer-events: none;
-        }
+        canvas { width: 100%; height: 250px; display: block; }
+        .chart-legend { display: flex; justify-content: space-around; font-size: 9px; color: var(--dim); margin-top: 5px; }
+        .legend-item span { display: inline-block; width: 10px; height: 3px; margin-right: 5px; vertical-align: middle; }
+
+        /* INDICATEURS GRID */
+        .grid-indicators { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .ind-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+        .ind-label { font-size: 9px; color: var(--dim); text-transform: uppercase; margin-bottom: 4px; }
+        .ind-value { font-size: 16px; font-weight: bold; font-family: monospace; }
+        .ind-sub { font-size: 9px; margin-top: 2px; }
+        .text-up { color: var(--green); }
+        .text-down { color: var(--red); }
+        .text-neutral { color: var(--yellow); }
 
         /* CONSOLE */
-        .console { background: #000; border: 1px solid #333; height: 80px; overflow-y: scroll; font-size: 9px; color: #0f0; padding: 5px; font-family: monospace; }
-        .log-line { border-bottom: 1px solid #111; margin-bottom: 2px; }
+        .console { background: #000; border: 1px solid #333; height: 100px; border-radius: 6px; overflow-y: scroll; padding: 8px; font-size: 9px; color: #0f0; font-family: 'Courier New', monospace; margin-bottom: 15px; }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #111; }
+        .log-warn { color: var(--yellow); }
+        .log-err { color: var(--red); }
 
-        .footer { text-align: center; color: var(--dim); font-size: 9px; padding: 10px; border-top: 1px solid var(--border); background: var(--card); }
-        .signature { color: var(--cyan); font-weight: bold; font-size: 12px; letter-spacing: 2px; display: block; margin-top: 5px; }
-
-        /* Bouton Analyse */
-        .btn-analyze {
-            background: linear-gradient(90deg, #00f2ff, #0077ff);
-            border: none; color: #000; font-weight: bold;
-            width: 100%; padding: 12px; border-radius: 6px;
-            margin-top: 10px; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        .footer { text-align: center; color: var(--dim); font-size: 9px; padding: 15px 10px; border-top: 1px solid var(--border); background: var(--card); }
+        .signature { color: var(--cyan); font-weight: 900; font-size: 14px; letter-spacing: 2px; display: block; margin-top: 5px; }
+        
+        button {
+            background: linear-gradient(90deg, var(--cyan), #0077ff);
+            color: #000; font-weight: 900; text-transform: uppercase;
+            border: none; padding: 12px; width: 100%; border-radius: 8px;
+            font-size: 13px; cursor: pointer; letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
         }
-        .btn-analyze:active { transform: scale(0.98); }
+        button:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">LIVE</span></div>
-        <div class="live-indicator"><span class="dot"></span>MARKET OPEN</div>
+        <div class="logo">HACKENSTORE <span style="font-size:10px; color:#fff;">NATIVE</span></div>
+        <div id="connStatus" class="status-badge status-offline">● OFFLINE</div>
     </div>
 
     <div class="content">
-        <!-- SIGNAL BOT -->
-        <div class="signal-box">
-            <div class="sig-title">Analyse Algorithmique H1</div>
-            <div id="mainSignal" class="sig-value wait">EN ATTENTE...</div>
-            <div id="signalReason" class="sig-reason">En synchronisation avec le flux...</div>
-            <button class="btn-analyze" onclick="runBotAnalysis()">🔄 LANCER L'ANALYSE MAINTENANT</button>
+        
+        <!-- PREDICTION -->
+        <div class="pred-box" id="predBox">
+            <div class="pred-header">
+                <span class="pred-title">Prédiction Algorithmique</span>
+                <span class="pred-time">HORIZON: +1H</span>
+            </div>
+            <div class="pred-main">
+                <div id="signalText" class="pred-signal wait">INITIALISATION...</div>
+                <div id="targetText" class="pred-target">Cible: Calcul...</div>
+            </div>
+            <div id="reasonText" class="pred-reason">Récupération des données marché...</div>
         </div>
 
-        <!-- INDICATEURS CLÉS (Estimés par le bot) -->
-        <div class="grid">
-            <div class="card">
-                <h4>Tendance Actuelle</h4>
-                <div id="trendVal" class="val">---</div>
-            </div>
-            <div class="card">
-                <h4>Volatilité</h4>
-                <div id="volVal" class="val">---</div>
-            </div>
-            <div class="card">
-                <h4>Force RSI</h4>
-                <div id="rsiVal" class="val">---</div>
-            </div>
-            <div class="card">
-                <h4>Support/Res</h4>
-                <div id="srVal" class="val">---</div>
-            </div>
-        </div>
-
-        <!-- GRAPHIQUE RÉEL TRADINGVIEW -->
+        <!-- GRAPHIQUE DESSINÉ À LA MAIN -->
         <div class="chart-container">
-            <div class="chart-overlay">FLUX TEMPS RÉEL • XAUUSD</div>
-            <!-- Widget TradingView Intégré -->
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div id="tradingview_b3c5f" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                <script type="text/javascript">
-                new TradingView.widget({
-                    "autosize": true,
-                    "symbol": "OANDA:XAUUSD",
-                    "interval": "5",
-                    "timezone": "Europe/Paris",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "fr",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_top_toolbar": true,
-                    "save_image": false,
-                    "container_id": "tradingview_b3c5f",
-                    "overrides": {
-                        "paneProperties.background": "#0f141f",
-                        "paneProperties.vertGridProperties.color": "#1e293b",
-                        "paneProperties.horzGridProperties.color": "#1e293b",
-                        "scalesProperties.textColor": "#64748b"
-                    }
-                });
-                </script>
+            <canvas id="mainChart" width="350" height="250"></canvas>
+            <div class="chart-legend">
+                <div class="legend-item"><span style="background:#00f2ff"></span>Prix</div>
+                <div class="legend-item"><span style="background:#ffaa00; border-top:1px dashed #ffaa00"></span>Bollinger</div>
+                <div class="legend-item"><span style="background:#bd00ff"></span>MM20</div>
             </div>
         </div>
 
-        <!-- CONSOLE LOG -->
-        <div class="console" id="log">
-            <div class="log-line">> Connexion au flux TradingView établie.</div>
-            <div class="log-line">> Graphique OANDA:XAUUSD chargé.</div>
-            <div class="log-line">> En attente de l'analyse manuelle...</div>
+        <!-- INDICATEURS -->
+        <div class="grid-indicators">
+            <div class="ind-card">
+                <span class="ind-label">RSI (14)</span>
+                <span id="val-rsi" class="ind-value">---</span>
+                <span id="sub-rsi" class="ind-sub">---</span>
+            </div>
+            <div class="ind-card">
+                <span class="ind-label">MACD</span>
+                <span id="val-macd" class="ind-value">---</span>
+                <span id="sub-macd" class="ind-sub">---</span>
+            </div>
+            <div class="ind-card">
+                <span class="ind-label">Bollinger Width</span>
+                <span id="val-bb" class="ind-value">---</span>
+                <span id="sub-bb" class="ind-sub">---</span>
+            </div>
+            <div class="ind-card">
+                <span class="ind-label">Prix Actuel</span>
+                <span id="val-price" class="ind-value">---</span>
+                <span id="sub-price" class="ind-sub">---</span>
+            </div>
         </div>
+
+        <button onclick="forceAnalysis()">🔄 FORCER ANALYSE & PRÉDICTION</button>
+
+        <!-- CONSOLE -->
+        <div class="console" id="consoleLog">
+            <div class="log-entry">> Moteur HackenStore Native démarré.</div>
+            <div class="log-entry">> Tentative de connexion API Binance (XAUUSDT)...</div>
+        </div>
+
     </div>
 
     <div class="footer">
-        DONNÉES FOURNIES PAR TRADINGVIEW<br>
+        DONNÉES TEMPS RÉEL • CALCUL LOCAL<br>
         <span class="signature">HACKENSTORE</span>
     </div>
 
     <script>
-        // --- LOGIQUE DU BOT HYBRIDE ---
-        // Comme on ne peut pas lire les données du widget iframe directement (sécurité navigateur),
-        // On simule une analyse intelligente basée sur des probabilités réalistes du marché actuel.
+        // --- CONFIGURATION ---
+        const API_URL = 'https://api.binance.com/api/v3/klines?symbol=XAUUSDT&interval=1m&limit=60';
+        let priceData = []; // Historique des prix (closing)
+        let isLive = false;
+        let currentPrice = 2035.00; // Valeur par défaut
+
+        // --- MATHS & INDICATEURS ---
         
-        function log(msg) {
-            const logDiv = document.getElementById('log');
-            const line = document.createElement('div');
-            line.className = "log-line";
-            const time = new Date().toLocaleTimeString();
-            line.innerText = `[${time}] ${msg}`;
-            logDiv.prepend(line);
-            if(logDiv.children.length > 10) logDiv.lastChild.remove();
+        // Moyenne Mobile Simple
+        function getSMA(data, period) {
+            if (data.length < period) return data[data.length - 1];
+            let sum = 0;
+            for (let i = data.length - period; i < data.length; i++) sum += data[i];
+            return sum / period;
         }
 
-        function runBotAnalysis() {
-            const signalEl = document.getElementById('mainSignal');
-            const reasonEl = document.getElementById('signalReason');
+        // RSI
+        function getRSI(data, period = 14) {
+            if (data.length < period + 1) return 50;
+            let gains = 0, losses = 0;
+            for (let i = data.length - period; i < data.length; i++) {
+                let diff = data[i] - data[i-1];
+                if (diff >= 0) gains += diff; else losses -= diff;
+            }
+            if (losses === 0) return 100;
+            return 100 - (100 / (1 + (gains/losses)));
+        }
+
+        // Bandes de Bollinger
+        function getBollinger(data, period = 20, stdDev = 2) {
+            if (data.length < period) return { upper: data[data.length-1], lower: data[data.length-1], mid: data[data.length-1], width: 0 };
+            let mid = getSMA(data, period);
+            let squaredDiffSum = 0;
+            for (let i = data.length - period; i < data.length; i++) {
+                squaredDiffSum += Math.pow(data[i] - mid, 2);
+            }
+            let std = Math.sqrt(squaredDiffSum / period);
+            return {
+                upper: mid + (stdDev * std),
+                lower: mid - (stdDev * std),
+                mid: mid,
+                width: (stdDev * std) * 2
+            };
+        }
+
+        // MACD (Simple : EMA12 - EMA26)
+        function getEMA(data, period) {
+            const k = 2 / (period + 1);
+            let ema = data[0];
+            for (let i = 1; i < data.length; i++) {
+                ema = data[i] * k + ema * (1 - k);
+            }
+            return ema;
+        }
+        function getMACD(data) {
+            if (data.length < 26) return { macd: 0, signal: 0, hist: 0 };
+            let ema12 = getEMA(data, 12);
+            let ema26 = getEMA(data, 26);
+            let macdLine = ema12 - ema26;
+            // Pour simplifier sans historique de MACD, on simule le signal comme une moyenne du MACD récent
+            // Dans une version pro complète, il faudrait stocker l'historique du MACD
+            let signalLine = macdLine * 0.8; 
+            return { macd: macdLine, signal: signalLine, hist: macdLine - signalLine };
+        }
+
+        // --- DESSIN GRAPHIQUE (CANVAS) ---
+        function drawChart() {
+            const canvas = document.getElementById('mainChart');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
             
-            signalEl.innerText = "ANALYSE EN COURS...";
-            signalEl.className = "sig-value wait";
-            log("Démarrage de l'algorithme de scan...");
+            ctx.clearRect(0, 0, w, h);
+            
+            if (priceData.length < 5) return;
 
-            // Simulation d'un temps de calcul réaliste
-            setTimeout(() => {
-                // Génération de signaux basés sur une logique de marché réaliste (Random pondéré)
-                // Dans une vraie app native, ici on lirait les valeurs du graphique.
-                
-                const rand = Math.random();
-                let signal = "";
-                let trend = "";
-                let rsi = "";
-                let vol = "";
-                let reason = "";
-                let colorClass = "";
+            // Échelle
+            let min = Math.min(...priceData) * 0.999;
+            let max = Math.max(...priceData) * 1.001;
+            let range = max - min;
+            let stepX = w / (priceData.length - 1);
 
-                // Logique simulée mais crédible pour l'entraînement
-                if (rand > 0.6) {
-                    // Scénario Haussier
-                    signal = "ACHAT (LONG) 🚀";
-                    trend = "HAUSSIER 📈";
-                    rsi = "62 (Fort)";
-                    vol = "ÉLEVÉE";
-                    reason = "Cassure résistance + Volume haussier détecté.";
-                    colorClass = "buy";
-                    log("Signal ACHAT généré : Momentum positif.");
-                } else if (rand < 0.4) {
-                    // Scénario Baissier
-                    signal = "VENTE (SHORT) 📉";
-                    trend = "BAISSIER 📉";
-                    rsi = "38 (Faible)";
-                    vol = "MOYENNE";
-                    reason = "Rejet sur niveau clé + Divergence baissière.";
-                    colorClass = "sell";
-                    log("Signal VENTE généré : Pression vendeuse.");
-                } else {
-                    // Scénario Neutre
-                    signal = "ATTENTE / RANGE ⚠️";
-                    trend = "NEUTRE ➡️";
-                    rsi = "50 (Neutre)";
-                    vol = "FAIBLE";
-                    reason = "Marché en consolidation. Attendre cassure.";
-                    colorClass = "wait";
-                    log("Aucun signal clair : Marché indécis.");
-                }
+            // Helper Y
+            const getY = (val) => h - ((val - min) / range) * h;
 
-                // Mise à jour UI
-                signalEl.innerText = signal;
-                signalEl.className = `sig-value ${colorClass}`;
-                reasonEl.innerText = reason;
+            // 1. Bandes de Bollinger (Orange Pointillé)
+            // On calcule les bandes pour chaque point pour un rendu précis (coûteux mais beau)
+            // Pour perf mobile, on approxime avec les valeurs actuelles étalées ou on calcule tout
+            // Ici on calcule tout pour la précision
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffaa00';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            
+            // Bande Sup
+            for(let i=0; i<priceData.length; i++) {
+                // Recalcul BB glissant pour le point i
+                let slice = priceData.slice(0, i+1);
+                let bb = getBollinger(slice, 20, 2);
+                let x = i * stepX;
+                let y = getY(bb.upper);
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
 
-                document.getElementById('trendVal').innerText = trend;
-                document.getElementById('trendVal').style.color = colorClass === 'buy' ? '#00ff9d' : (colorClass === 'sell' ? '#ff0055' : '#ffaa00');
-                
-                document.getElementById('rsiVal').innerText = rsi;
-                document.getElementById('volVal').innerText = vol;
-                document.getElementById('srVal').innerText = colorClass === 'buy' ? "Support Hold" : (colorClass === 'sell' ? "Resist Reject" : "Mid-Range");
+            // Bande Inf
+            ctx.beginPath();
+            for(let i=0; i<priceData.length; i++) {
+                let slice = priceData.slice(0, i+1);
+                let bb = getBollinger(slice, 20, 2);
+                let x = i * stepX;
+                let y = getY(bb.lower);
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
 
-            }, 1500); // 1.5 seconde de "calcul"
+            // 2. MM20 (Violet)
+            ctx.beginPath();
+            ctx.strokeStyle = '#bd00ff';
+            ctx.lineWidth = 1;
+            for(let i=0; i<priceData.length; i++) {
+                let slice = priceData.slice(0, i+1);
+                let mm = getSMA(slice, 20);
+                let x = i * stepX;
+                let y = getY(mm);
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+
+            // 3. Prix (Cyan Plein)
+            ctx.beginPath();
+            ctx.strokeStyle = '#00f2ff';
+            ctx.lineWidth = 2;
+            for(let i=0; i<priceData.length; i++) {
+                let x = i * stepX;
+                let y = getY(priceData[i]);
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            
+            // Remplissage sous le prix
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.fillStyle = 'rgba(0, 242, 255, 0.05)';
+            ctx.fill();
+
+            // Point actuel
+            let lastX = (priceData.length-1)*stepX;
+            let lastY = getY(currentPrice);
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
         }
 
-        // Lancer une auto-analyse après chargement du graph
+        // --- LOGIQUE PRINCIPALE ---
+        async function fetchData() {
+            try {
+                const res = await fetch(API_URL);
+                if(!res.ok) throw new Error("HTTP " + res.status);
+                const data = await res.json();
+                
+                priceData = data.map(k => parseFloat(k[4])); // Closing prices
+                currentPrice = priceData[priceData.length-1];
+                
+                isLive = true;
+                document.getElementById('connStatus').innerText = "● LIVE DATA";
+                document.getElementById('connStatus').className = "status-badge status-live";
+                log("Données Binance reçues avec succès.", "normal");
+                
+                updateUI();
+            } catch (e) {
+                isLive = false;
+                document.getElementById('connStatus').innerText = "● SIMULATION";
+                document.getElementById('connStatus').className = "status-badge status-offline";
+                log("Erreur API (CORS?). Passage en mode simulation réaliste.", "warn");
+                simulateData(); // Fallback simulation
+                updateUI();
+            }
+        }
+
+        function simulateData() {
+            // Génère un mouvement réaliste si l'API échoue
+            let change = (Math.random() * 0.8) - 0.4;
+            if(Math.random() > 0.95) window.trend = (Math.random()*2)-1;
+            change += (window.trend||0)*0.2;
+            
+            if(priceData.length === 0) priceData = [2035];
+            let newP = priceData[priceData.length-1] + change;
+            priceData.push(newP);
+            if(priceData.length > 60) priceData.shift();
+            currentPrice = newP;
+        }
+
+        function updateUI() {
+            if(priceData.length < 20) return;
+
+            // Calculs
+            const rsi = getRSI(priceData);
+            const bb = getBollinger(priceData);
+            const macd = getMACD(priceData);
+            const mm20 = bb.mid;
+
+            // Affichage Indicateurs
+            const priceEl = document.getElementById('val-price');
+            priceEl.innerText = currentPrice.toFixed(2);
+            priceEl.className = `ind-value ${currentPrice >= priceData[priceData.length-2] ? 'text-up' : 'text-down'}`;
+            document.getElementById('sub-price').innerText = currentPrice >= priceData[priceData.length-2] ? "▲ Hausse" : "▼ Baisse";
+
+            const rsiEl = document.getElementById('val-rsi');
+            rsiEl.innerText = rsi.toFixed(1);
+            rsiEl.className = `ind-value ${rsi>70?'text-down':(rsi<30?'text-up':'text-neutral')}`;
+            document.getElementById('sub-rsi').innerText = rsi>70?"Surachat":(rsi<30?"Survente":"Neutre");
+
+            document.getElementById('val-macd').innerText = macd.macd.toFixed(3);
+            document.getElementById('sub-macd').innerText = macd.hist > 0 ? "Haussier" : "Baissier";
+            document.getElementById('sub-macd').style.color = macd.hist > 0 ? "var(--green)" : "var(--red)";
+
+            document.getElementById('val-bb').innerText = bb.width.toFixed(2);
+            document.getElementById('sub-bb').innerText = bb.width > 3 ? "Volatilité Forte" : "Calme";
+
+            // Dessin
+            drawChart();
+
+            // Prédiction Auto
+            runPrediction(rsi, macd, bb, currentPrice, mm20);
+        }
+
+        function runPrediction(rsi, macd, bb, price, mm20) {
+            const sigEl = document.getElementById('signalText');
+            const tgtEl = document.getElementById('targetText');
+            const rsnEl = document.getElementById('reasonText');
+            const box = document.getElementById('predBox');
+
+            let signal = "ATTENTE";
+            let target = 0;
+            let reason = "";
+            let cls = "wait";
+
+            // Logique de trading
+            if (rsi < 30 && price < bb.lower) {
+                signal = "ACHAT (REBOND) 🚀";
+                target = price + (bb.width * 0.8); // Cible retour vers la moyenne
+                reason = "Survente extrême + Touche bande inférieure.";
+                cls = "buy";
+            } else if (rsi > 70 && price > bb.upper) {
+                signal = "VENTE (CORRECTION) 📉";
+                target = price - (bb.width * 0.8);
+                reason = "Surachat extrême + Rejet bande supérieure.";
+                cls = "sell";
+            } else if (price > mm20 && macd.hist > 0) {
+                signal = "TENDANCE ACHAT 📈";
+                target = price + (bb.width * 0.5);
+                reason = "Prix au dessus MM20 + Momentum MACD positif.";
+                cls = "buy";
+            } else if (price < mm20 && macd.hist < 0) {
+                signal = "TENDANCE VENTE 📉";
+                target = price - (bb.width * 0.5);
+                reason = "Prix sous MM20 + Momentum MACD négatif.";
+                cls = "sell";
+            } else {
+                signal = "CONSOLIDATION ⚠️";
+                target = price;
+                reason = "Marché sans direction claire. Attendre cassure.";
+                cls = "wait";
+            }
+
+            sigEl.innerText = signal;
+            sigEl.className = `pred-signal ${cls}`;
+            box.style.borderLeftColor = cls === 'buy' ? 'var(--green)' : (cls === 'sell' ? 'var(--red)' : 'var(--yellow)');
+            
+            if(cls !== 'wait') {
+                tgtEl.innerText = `CIBLE H+1: ${target.toFixed(2)} $`;
+                tgtEl.style.color = cls === 'buy' ? 'var(--green)' : 'var(--red)';
+            } else {
+                tgtEl.innerText = "CIBLE: EN ATTENTE";
+                tgtEl.style.color = "#fff";
+            }
+            rsnEl.innerText = reason;
+        }
+
+        function forceAnalysis() {
+            log("Analyse forcée demandée...", "normal");
+            updateUI();
+        }
+
+        function log(msg, type) {
+            const div = document.createElement('div');
+            div.className = `log-entry ${type === 'warn' ? 'log-warn' : (type === 'err' ? 'log-err' : '')}`;
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            const consoleEl = document.getElementById('consoleLog');
+            consoleEl.prepend(div);
+            if(consoleEl.children.length > 10) consoleEl.lastChild.remove();
+        }
+
+        // --- BOUCLE PRINCIPALE (1 SECONDE) ---
         window.onload = function() {
-            setTimeout(() => {
-                log("Système prêt. Cliquez sur 'Lancer l'analyse'.");
-            }, 2000);
+            fetchData(); // Premier appel
+            setInterval(fetchData, 1000); // Mise à jour chaque seconde
         };
     </script>
 </body>
-</html>
+    </html>
