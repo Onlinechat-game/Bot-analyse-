@@ -2,191 +2,160 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>HACKEN STORE - ULTRA PRO</title>
+<title>HACKEN STORE - SMART MONEY XAUUSD</title>
 
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
 body {
-    margin:0;
     background:#000;
-    color:#00ffc3;
+    color:#ffd700;
     font-family:Arial;
     text-align:center;
 }
 
-h1 {
-    text-shadow:0 0 10px #00ffc3;
-}
+h1 { text-shadow:0 0 10px gold; }
 
 .chart {
     width:95%;
-    height:300px;
+    height:400px;
     margin:auto;
-    margin-top:15px;
 }
 
 .box {
     display:inline-block;
     padding:10px;
     margin:5px;
-    border:1px solid #00ffc3;
+    border:1px solid gold;
     border-radius:10px;
-    box-shadow:0 0 10px #00ffc3;
+    box-shadow:0 0 10px gold;
 }
 
 .buy { color:#00ff00; }
 .sell { color:red; }
-.neutral { color:orange; }
-
-footer { opacity:0.4; margin-top:10px; }
 </style>
 </head>
 
 <body>
 
-<h1>⚡ HACKEN STORE - ULTRA PRO</h1>
+<h1>🟡 SMART MONEY XAUUSD</h1>
 
-<div id="indicators"></div>
-<h2 id="signal">Connexion...</h2>
+<div id="signal"></div>
+<div id="chart" class="chart"></div>
 
-<div id="mainChart" class="chart"></div>
-<div id="rsiChart" class="chart"></div>
-<div id="macdChart" class="chart"></div>
-
-<footer>HACKEN STORE 🚀</footer>
+<footer>HACKEN STORE ⚡</footer>
 
 <script>
 
-// CREATE CHARTS
-const mainChart = LightweightCharts.createChart(document.getElementById('mainChart'), { height:300 });
-const rsiChart = LightweightCharts.createChart(document.getElementById('rsiChart'), { height:200 });
-const macdChart = LightweightCharts.createChart(document.getElementById('macdChart'), { height:200 });
+const API_KEY = "a4186ccd7b4843cc9fa11f095aecf159";
 
-// SERIES
-const candleSeries = mainChart.addCandlestickSeries();
-const ma20Series = mainChart.addLineSeries({ color: 'yellow' });
-const ma50Series = mainChart.addLineSeries({ color: 'blue' });
-const ma200Series = mainChart.addLineSeries({ color: 'white' });
+// CHART
+const chart = LightweightCharts.createChart(document.getElementById('chart'), { height:400 });
 
-const bbUpper = mainChart.addLineSeries({ color: 'red' });
-const bbLower = mainChart.addLineSeries({ color: 'green' });
-
-const rsiSeries = rsiChart.addLineSeries({ color: 'orange' });
-const macdSeries = macdChart.addLineSeries({ color: 'cyan' });
+const candleSeries = chart.addCandlestickSeries();
+const lineSeries = chart.addLineSeries({ color: 'yellow' });
 
 // FETCH
 async function getData(){
-    let res = await fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=200");
+    let res = await fetch(`https://api.twelvedata.com/time_series?symbol=XAU/USD&interval=1min&outputsize=200&apikey=${API_KEY}`);
     let d = await res.json();
 
-    return d.map(c=>({
-        time: c[0]/1000,
-        open: +c[1],
-        high: +c[2],
-        low: +c[3],
-        close: +c[4]
+    return d.values.reverse().map(c=>({
+        time:new Date(c.datetime).getTime()/1000,
+        open:+c.open,
+        high:+c.high,
+        low:+c.low,
+        close:+c.close
     }));
 }
 
-// INDICATORS
-function MA(data, p){
-    let r=[];
-    for(let i=0;i<data.length;i++){
-        if(i<p) r.push(null);
-        else{
-            let s=0;
-            for(let j=i-p;j<i;j++) s+=data[j];
-            r.push(s/p);
-        }
-    }
-    return r;
+// SMART MONEY DETECTION
+
+function detectBOS(data){
+    let lastHigh = Math.max(...data.slice(-20).map(c=>c.high));
+    let lastLow = Math.min(...data.slice(-20).map(c=>c.low));
+
+    let last = data[data.length-1];
+
+    if(last.close > lastHigh) return "BOS HAUSSIER 🚀";
+    if(last.close < lastLow) return "BOS BAISSIER 🔻";
+    return "STRUCTURE STABLE";
 }
 
-function RSI(data,p=14){
-    let r=[];
-    for(let i=0;i<data.length;i++){
-        if(i<p) r.push(null);
-        else{
-            let g=0,l=0;
-            for(let j=i-p;j<i;j++){
-                let d=data[j+1]-data[j];
-                if(d>0) g+=d; else l-=d;
-            }
-            let rs=g/(l||1);
-            r.push(100-(100/(1+rs)));
-        }
-    }
-    return r;
+function detectLiquiditySweep(data){
+    let highs = data.slice(-10).map(c=>c.high);
+    let lows = data.slice(-10).map(c=>c.low);
+
+    let last = data[data.length-1];
+
+    if(last.high > Math.max(...highs.slice(0,-1)))
+        return "LIQUIDITÉ HAUT PRISE ⚠️";
+
+    if(last.low < Math.min(...lows.slice(0,-1)))
+        return "LIQUIDITÉ BAS PRISE ⚠️";
+
+    return "PAS DE SWEEP";
 }
 
-function MACD(data){
-    const EMA=(d,p)=>{
-        let k=2/(p+1), ema=[d[0]];
-        for(let i=1;i<d.length;i++)
-            ema.push(d[i]*k+ema[i-1]*(1-k));
-        return ema;
-    };
-    let e12=EMA(data,12), e26=EMA(data,26);
-    return e12.map((v,i)=>v-e26[i]);
+function detectOrderBlock(data){
+    let last = data[data.length-2];
+
+    if(last.close < last.open)
+        return "ORDER BLOCK ACHAT 🟢";
+
+    if(last.close > last.open)
+        return "ORDER BLOCK VENTE 🔴";
+
+    return "NEUTRE";
 }
 
-function Bollinger(data,p=20){
-    let ma=MA(data,p), up=[], low=[];
-    for(let i=0;i<data.length;i++){
-        if(i<p){ up.push(null); low.push(null); }
-        else{
-            let m=ma[i], s=0;
-            for(let j=i-p;j<i;j++)
-                s+=(data[j]-m)**2;
-            let sd=Math.sqrt(s/p);
-            up.push(m+2*sd);
-            low.push(m-2*sd);
-        }
-    }
-    return {up,low};
+function detectFVG(data){
+    let a = data[data.length-3];
+    let b = data[data.length-2];
+    let c = data[data.length-1];
+
+    if(c.low > a.high) return "FVG HAUSSIER 📈";
+    if(c.high < a.low) return "FVG BAISSIER 📉";
+
+    return "PAS DE FVG";
 }
 
 // UPDATE
 async function update(){
     let candles = await getData();
-    let closes = candles.map(c=>c.close);
 
     candleSeries.setData(candles);
 
-    let ma20 = MA(closes,20);
-    let ma50 = MA(closes,50);
-    let ma200 = MA(closes,200);
+    let bos = detectBOS(candles);
+    let sweep = detectLiquiditySweep(candles);
+    let ob = detectOrderBlock(candles);
+    let fvg = detectFVG(candles);
 
-    let bb = Bollinger(closes);
-    let rsi = RSI(closes);
-    let macd = MACD(closes);
+    // SIGNAL FINAL
+    let signal="NEUTRE";
+    let cls="";
 
-    ma20Series.setData(candles.map((c,i)=>({time:c.time,value:ma20[i]})));
-    ma50Series.setData(candles.map((c,i)=>({time:c.time,value:ma50[i]})));
-    ma200Series.setData(candles.map((c,i)=>({time:c.time,value:ma200[i]})));
+    if(bos.includes("HAUSSIER") && ob.includes("ACHAT")) {
+        signal="SMART BUY 🚀";
+        cls="buy";
+    }
+    else if(bos.includes("BAISSIER") && ob.includes("VENTE")) {
+        signal="SMART SELL 🔻";
+        cls="sell";
+    }
 
-    bbUpper.setData(candles.map((c,i)=>({time:c.time,value:bb.up[i]})));
-    bbLower.setData(candles.map((c,i)=>({time:c.time,value:bb.low[i]})));
-
-    rsiSeries.setData(candles.map((c,i)=>({time:c.time,value:rsi[i]})));
-    macdSeries.setData(candles.map((c,i)=>({time:c.time,value:macd[i]})));
-
-    let last = closes.at(-1);
-    let signal="NEUTRE", cls="neutral";
-
-    if(rsi.at(-1)<30 && last<ma20.at(-1)) { signal="ACHAT 🚀"; cls="buy"; }
-    else if(rsi.at(-1)>70 && last>ma20.at(-1)) { signal="VENTE 🔻"; cls="sell"; }
-
-    document.getElementById("signal").innerHTML=`<span class="${cls}">${signal}</span>`;
-
-    document.getElementById("indicators").innerHTML=`
-        <div class="box">RSI: ${rsi.at(-1)?.toFixed(2)}</div>
-        <div class="box">Prix: ${last.toFixed(2)}</div>
+    document.getElementById("signal").innerHTML=`
+        <div class="${cls}">
+            <h2>${signal}</h2>
+            <div class="box">${bos}</div>
+            <div class="box">${sweep}</div>
+            <div class="box">${ob}</div>
+            <div class="box">${fvg}</div>
+        </div>
     `;
 }
 
-setInterval(update,3000);
+setInterval(update,5000);
 update();
 
 </script>
