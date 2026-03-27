@@ -10,16 +10,21 @@
 body {
     background:#000;
     color:#ffd700;
-    font-family:Arial;
+    font-family:Arial, sans-serif;
     text-align:center;
+    margin:0;
+    padding:0;
 }
 
-h1 { text-shadow:0 0 10px gold; }
+h1 {
+    text-shadow:0 0 10px gold;
+    margin-top:15px;
+}
 
 .chart {
     width:95%;
     height:400px;
-    margin:auto;
+    margin:20px auto;
 }
 
 .box {
@@ -33,6 +38,13 @@ h1 { text-shadow:0 0 10px gold; }
 
 .buy { color:#00ff00; }
 .sell { color:red; }
+
+footer {
+    margin-top:20px;
+    padding:10px;
+    font-size:14px;
+    color:#ffd700;
+}
 </style>
 </head>
 
@@ -46,105 +58,173 @@ h1 { text-shadow:0 0 10px gold; }
 <footer>HACKEN STORE ⚡</footer>
 
 <script>
-
 const API_KEY = "a4186ccd7b4843cc9fa11f095aecf159";
 
 // CHART
-const chart = LightweightCharts.createChart(document.getElementById('chart'), { height:400 });
+const chartElement = document.getElementById('chart');
+const chart = LightweightCharts.createChart(chartElement, {
+    width: chartElement.clientWidth,
+    height: 400,
+    layout: {
+        background: { color: '#000000' },
+        textColor: '#ffd700'
+    },
+    grid: {
+        vertLines: { color: '#333' },
+        horzLines: { color: '#333' }
+    },
+    timeScale: {
+        borderColor: '#71649C'
+    },
+    rightPriceScale: {
+        borderColor: '#71649C'
+    }
+});
 
-const candleSeries = chart.addCandlestickSeries();
-const lineSeries = chart.addLineSeries({ color: 'yellow' });
+const candleSeries = chart.addCandlestickSeries({
+    upColor: '#00ff00',
+    downColor: '#ff0000',
+    borderUpColor: '#00ff00',
+    borderDownColor: '#ff0000',
+    wickUpColor: '#00ff00',
+    wickDownColor: '#ff0000'
+});
+
+const lineSeries = chart.addLineSeries({
+    color: 'yellow',
+    lineWidth: 1
+});
 
 // FETCH
-async function getData(){
-    let res = await fetch(`https://api.twelvedata.com/time_series?symbol=XAU/USD&interval=1min&outputsize=200&apikey=${API_KEY}`);
-    let d = await res.json();
+async function getData() {
+    try {
+        const url = `https://api.twelvedata.com/time_series?symbol=XAU/USD&interval=1min&outputsize=200&apikey=${API_KEY}`;
+        const res = await fetch(url);
+        const d = await res.json();
 
-    return d.values.reverse().map(c=>({
-        time:new Date(c.datetime).getTime()/1000,
-        open:+c.open,
-        high:+c.high,
-        low:+c.low,
-        close:+c.close
-    }));
+        // Debug console
+        console.log("Réponse API :", d);
+
+        if (!d.values || !Array.isArray(d.values)) {
+            console.error("Pas de données 'values' dans la réponse API.");
+            return [];
+        }
+
+        const candles = d.values.reverse().map(c => ({
+            time: Math.floor(new Date(c.datetime).getTime() / 1000),
+            open: parseFloat(c.open),
+            high: parseFloat(c.high),
+            low: parseFloat(c.low),
+            close: parseFloat(c.close)
+        }));
+
+        return candles;
+    } catch (e) {
+        console.error("Erreur lors du fetch des données :", e);
+        return [];
+    }
 }
 
 // SMART MONEY DETECTION
 
-function detectBOS(data){
-    let lastHigh = Math.max(...data.slice(-20).map(c=>c.high));
-    let lastLow = Math.min(...data.slice(-20).map(c=>c.low));
+function detectBOS(data) {
+    if (data.length < 20) return "STRUCTURE INSUFFISANTE";
 
-    let last = data[data.length-1];
+    const last20 = data.slice(-20);
+    const lastHigh = Math.max(...last20.map(c => c.high));
+    const lastLow = Math.min(...last20.map(c => c.low));
 
-    if(last.close > lastHigh) return "BOS HAUSSIER 🚀";
-    if(last.close < lastLow) return "BOS BAISSIER 🔻";
+    const last = data[data.length - 1];
+
+    if (last.close > lastHigh) return "BOS HAUSSIER 🚀";
+    if (last.close < lastLow) return "BOS BAISSIER 🔻";
     return "STRUCTURE STABLE";
 }
 
-function detectLiquiditySweep(data){
-    let highs = data.slice(-10).map(c=>c.high);
-    let lows = data.slice(-10).map(c=>c.low);
+function detectLiquiditySweep(data) {
+    if (data.length < 10) return "PAS DE SWEEP (Données insuffisantes)";
 
-    let last = data[data.length-1];
+    const last10 = data.slice(-10);
+    const highs = last10.map(c => c.high);
+    const lows = last10.map(c => c.low);
 
-    if(last.high > Math.max(...highs.slice(0,-1)))
+    const last = data[data.length - 1];
+
+    if (last.high > Math.max(...highs.slice(0, -1)))
         return "LIQUIDITÉ HAUT PRISE ⚠️";
 
-    if(last.low < Math.min(...lows.slice(0,-1)))
+    if (last.low < Math.min(...lows.slice(0, -1)))
         return "LIQUIDITÉ BAS PRISE ⚠️";
 
     return "PAS DE SWEEP";
 }
 
-function detectOrderBlock(data){
-    let last = data[data.length-2];
+function detectOrderBlock(data) {
+    if (data.length < 3) return "NEUTRE";
 
-    if(last.close < last.open)
+    // On garde ta logique simple : bougie précédente
+    const last = data[data.length - 2];
+
+    if (last.close < last.open)
         return "ORDER BLOCK ACHAT 🟢";
 
-    if(last.close > last.open)
+    if (last.close > last.open)
         return "ORDER BLOCK VENTE 🔴";
 
     return "NEUTRE";
 }
 
-function detectFVG(data){
-    let a = data[data.length-3];
-    let b = data[data.length-2];
-    let c = data[data.length-1];
+function detectFVG(data) {
+    if (data.length < 3) return "PAS DE FVG (Données insuffisantes)";
 
-    if(c.low > a.high) return "FVG HAUSSIER 📈";
-    if(c.high < a.low) return "FVG BAISSIER 📉";
+    const a = data[data.length - 3];
+    const b = data[data.length - 2];
+    const c = data[data.length - 1];
+
+    // Version simple basée sur ta logique
+    if (c.low > a.high) return "FVG HAUSSIER 📈";
+    if (c.high < a.low) return "FVG BAISSIER 📉";
 
     return "PAS DE FVG";
 }
 
 // UPDATE
-async function update(){
-    let candles = await getData();
+async function update() {
+    const candles = await getData();
 
+    if (!candles || candles.length === 0) {
+        console.warn("Aucune donnée de bougie reçue. Le graphique restera vide.");
+        document.getElementById("signal").innerHTML = `
+            <div>
+                <h2>Pas de données reçues ❌</h2>
+                <div class="box">Vérifie ta clé API ou le quota TwelveData.</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Mise à jour des séries
     candleSeries.setData(candles);
+    lineSeries.setData(candles.map(c => ({ time: c.time, value: c.close })));
 
-    let bos = detectBOS(candles);
-    let sweep = detectLiquiditySweep(candles);
-    let ob = detectOrderBlock(candles);
-    let fvg = detectFVG(candles);
+    const bos = detectBOS(candles);
+    const sweep = detectLiquiditySweep(candles);
+    const ob = detectOrderBlock(candles);
+    const fvg = detectFVG(candles);
 
     // SIGNAL FINAL
-    let signal="NEUTRE";
-    let cls="";
+    let signal = "NEUTRE";
+    let cls = "";
 
-    if(bos.includes("HAUSSIER") && ob.includes("ACHAT")) {
-        signal="SMART BUY 🚀";
-        cls="buy";
-    }
-    else if(bos.includes("BAISSIER") && ob.includes("VENTE")) {
-        signal="SMART SELL 🔻";
-        cls="sell";
+    if (bos.includes("HAUSSIER") && ob.includes("ACHAT")) {
+        signal = "SMART BUY 🚀";
+        cls = "buy";
+    } else if (bos.includes("BAISSIER") && ob.includes("VENTE")) {
+        signal = "SMART SELL 🔻";
+        cls = "sell";
     }
 
-    document.getElementById("signal").innerHTML=`
+    document.getElementById("signal").innerHTML = `
         <div class="${cls}">
             <h2>${signal}</h2>
             <div class="box">${bos}</div>
@@ -155,9 +235,15 @@ async function update(){
     `;
 }
 
-setInterval(update,5000);
-update();
+// Resize responsive
+window.addEventListener('resize', () => {
+    chart.applyOptions({ width: chartElement.clientWidth });
+});
 
+// Lancement
+update();
+// Intervalle un peu plus long pour éviter de spam l'API
+setInterval(update, 15000);
 </script>
 
 </body>
