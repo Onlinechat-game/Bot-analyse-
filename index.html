@@ -4,15 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HACKENSTORE — XAUUSD LIVE PRO (v5.0)</title>
+    <!-- Préchargement des polices pour éviter qu'elles n'apparaissent en retard -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
-
         :root {
             --bg-primary: #05060a;
             --bg-secondary: #0a0c14;
             --bg-card: #0d1017;
             --gold: #FFD700;
             --gold-dark: #B8860B;
+            --gold-light: #FFEC8B;
             --green: #00E676;
             --red: #FF1744;
             --blue: #448AFF;
@@ -31,7 +35,7 @@
         body {
             background: var(--bg-primary);
             color: var(--text-primary);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Rajdhani', sans-serif; /* Police de secours si Rajdhani échoue */
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -57,33 +61,51 @@
 
         /* ═══ HEADER ═══ */
         .header {
-            position: relative; z-index: 10;
+            position: relative; z-index: 100; /* Z-index très élevé pour passer au dessus de tout */
             display: flex; align-items: center; justify-content: space-between;
             padding: 15px 30px;
             background: linear-gradient(180deg, rgba(255,215,0,0.08) 0%, transparent 100%);
             border-bottom: 1px solid var(--border-gold);
+            backdrop-filter: blur(5px); /* Effet de flou pour détacher du fond */
         }
 
         .logo-section { display: flex; align-items: center; gap: 15px; }
+        
         .logo-icon {
             width: 48px; height: 48px;
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 22px; color: #000;
+            font-family: 'Orbitron', 'Arial Black', sans-serif; /* Fallback police */
+            font-weight: 900; font-size: 22px; color: #000;
             box-shadow: 0 0 25px rgba(255,215,0,0.4);
             animation: logoPulse 3s ease-in-out infinite;
+            flex-shrink: 0; /* Empêche l'icône de rétrécir */
         }
         @keyframes logoPulse { 0%, 100% { box-shadow: 0 0 25px rgba(255,215,0,0.4); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.7); } }
 
         .logo-text {
-            font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 800;
+            font-family: 'Orbitron', 'Arial Black', sans-serif; /* Fallback police */
+            font-size: 26px; font-weight: 800;
+            /* Dégradé principal */
             background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
-            background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             animation: shimmer 3s linear infinite;
+            /* COULEUR DE SECOURS (Très important si le dégradé bug) */
+            color: var(--gold); 
+            white-space: nowrap; /* Empêche le texte de passer à la ligne */
         }
         @keyframes shimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
-        .logo-sub { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 3px; text-transform: uppercase; }
+        
+        .logo-sub { 
+            font-size: 11px; color: var(--text-muted); 
+            font-family: 'JetBrains Mono', 'Courier New', monospace; 
+            letter-spacing: 3px; text-transform: uppercase; 
+            display: block; /* Force l'affichage en bloc sous le titre */
+        }
 
         .pair-info { text-align: right; }
         .pair-name { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 700; color: var(--gold); }
@@ -222,7 +244,7 @@
 
         /* ═══ FOOTER ═══ */
         .footer { position: relative; z-index: 10; text-align: center; padding: 20px; border-top: 1px solid var(--border-gold); margin-top: 16px; }
-        .footer-brand { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light), var(--gold)); background-size: 300% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 3s linear infinite; }
+        .footer-brand { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light), var(--gold)); background-size: 300% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 3s linear infinite; color: var(--gold); }
         .footer-disclaimer { font-size: 9px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 6px; letter-spacing: 1px; }
 
         /* ═══ REFRESH BUTTON ═══ */
@@ -242,7 +264,12 @@
 
         /* ═══ RESPONSIVE ═══ */
         @media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; } .sub-charts { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 600px) { .header { flex-direction: column; gap: 10px; text-align: center; } .pair-info { text-align: center; } .consensus-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 600px) { 
+            .header { flex-direction: column; gap: 10px; text-align: center; } 
+            .pair-info { text-align: center; } 
+            .consensus-grid { grid-template-columns: repeat(4, 1fr); }
+            .logo-text { font-size: 20px; } /* Ajustement mobile */
+        }
 
         /* ═══ LOADING ═══ */
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,215,0,0.2); border-top: 2px solid var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
@@ -260,6 +287,7 @@
     <div class="logo-section">
         <div class="logo-icon">H</div>
         <div>
+            <!-- Le texte est maintenant protégé par une couleur de fallback -->
             <div class="logo-text">HACKENSTORE</div>
             <div class="logo-sub">Live Market Engine v5.0</div>
         </div>
@@ -680,10 +708,9 @@ class HackenstoreEngine {
     }
 
     calcADX(highs, lows, closes, period) {
-        const adx = new Array(period + 1).fill(null); // ADX starts later
+        const adx = new Array(period + 1).fill(null); 
         let plusDM = 0, minusDM = 0, trSum = 0;
         
-        // Initial calculation
         for (let i = 1; i <= period; i++) {
             const highDiff = highs[i] - highs[i-1];
             const lowDiff = lows[i-1] - lows[i];
@@ -792,16 +819,14 @@ class HackenstoreEngine {
             else { signals.stoch = 'NEUTRAL'; }
         } else { signals.stoch = 'NEUTRAL'; }
 
-        // 5) ADX (Force de tendance)
+        // 5) ADX
         const adx = this.indicators.adx[n];
         if (adx !== null) {
             if (adx < 25) { 
-                // Marché plat, on réduit l'impact des autres signaux ou on reste neutre
                 score *= 0.5; 
                 signals.adx = 'FAIBLE'; 
             } else {
                 signals.adx = 'FORT';
-                // Si ADX fort, on regarde la direction (simplifié ici par MM20)
                 if (price > mm20) score += 0.5; else score -= 0.5;
             }
         } else { signals.adx = 'NEUTRAL'; }
@@ -1076,7 +1101,7 @@ class HackenstoreEngine {
         this.setSignalUI('RSI', pred.signals.rsi);
         this.setSignalUI('MACD', pred.signals.macd);
         this.setSignalUI('STOCH', pred.signals.stoch);
-        this.setSignalUI('ADX', pred.signals.adx === 'FORT' ? 'BUY' : pred.signals.adx === 'FAIBLE' ? 'NEUTRAL' : 'NEUTRAL'); // Simplified ADX signal visual
+        this.setSignalUI('ADX', pred.signals.adx === 'FORT' ? 'BUY' : pred.signals.adx === 'FAIBLE' ? 'NEUTRAL' : 'NEUTRAL');
         this.setSignalUI('BB', pred.signals.bb);
         this.setSignalUI('SR', pred.signals.sr);
 
@@ -1203,4 +1228,4 @@ window.addEventListener('resize', () => {
 });
 </script>
 </body>
-                         </html>
+                    </html>
